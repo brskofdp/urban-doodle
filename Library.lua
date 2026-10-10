@@ -217,6 +217,7 @@ local Library = {
     CornerRadius = 4,
     CornerRadiusDropdown = false, -- Temporary
 
+    BackgroundTransparency = 0,
     IsLightTheme = false,
     Scheme = {
         BackgroundColor = Color3.fromRGB(15, 15, 15),
@@ -315,6 +316,7 @@ local Templates = {
         SearchbarSize = UDim2.fromScale(1, 1),
         GlobalSearch = false,
         CornerRadius = 4,
+        BackgroundTransparency = 0,
         NotifySide = "Right",
         ShowCustomCursor = true,
         Font = Enum.Font.Code,
@@ -1053,7 +1055,7 @@ type IconModule = {
 
 local FetchIcons, Icons = pcall(function()
     return (loadstring(
-        game:HttpGet("https://gitlab.com/upio/lucide-roblox-direct/-/raw/main/source.lua")
+        game:HttpGet("https://raw.githubusercontent.com/brskofdp/urban-doodle/refs/heads/main/source.lua")
     ) :: () -> IconModule)()
 end)
 
@@ -6484,6 +6486,7 @@ function Library:CreateWindow(WindowInfo)
     WindowInfo.CompactWidthActivation = math.max(48, WindowInfo.CompactWidthActivation)
 
     Library.CornerRadius = WindowInfo.CornerRadius
+    Library.BackgroundTransparency = math.clamp(WindowInfo.BackgroundTransparency or 0, 0, 1)
     Library:SetNotifySide(WindowInfo.NotifySide)
     Library.ShowCustomCursor = WindowInfo.ShowCustomCursor
     Library.Scheme.Font = WindowInfo.Font
@@ -6866,6 +6869,23 @@ function Library:CreateWindow(WindowInfo)
         })
     end
 
+    --// Window background transparency \\--
+    local function ApplyWindowBackgroundTransparency(Transparency: number)
+        MainFrame.BackgroundTransparency = Transparency
+        BottomBackground.BackgroundTransparency = Transparency
+        Tabs.BackgroundTransparency = Transparency
+        Container.BackgroundTransparency = Transparency
+
+        -- Also fade every instance whose background is tied to the "BackgroundColor" scheme (groupboxes, tabboxes, menus, ...)
+        for Instance, Properties in Library.Registry do
+            if typeof(Properties) == "table" and Properties.BackgroundColor3 == "BackgroundColor" then
+                Instance.BackgroundTransparency = Transparency
+            end
+        end
+    end
+
+    ApplyWindowBackgroundTransparency(Library.BackgroundTransparency)
+
     --// Window Table \\--
     local Window = {}
 
@@ -6890,6 +6910,20 @@ function Library:CreateWindow(WindowInfo)
 
         FooterLabel.Text = footer
         WindowInfo.Footer = footer
+    end
+
+    function Window:SetBackgroundTransparency(Transparency: number)
+        assert(typeof(Transparency) == "number", "Expected number for Transparency got: " .. typeof(Transparency))
+        Transparency = math.clamp(Transparency, 0, 1)
+
+        Library.BackgroundTransparency = Transparency
+        WindowInfo.BackgroundTransparency = Transparency
+
+        ApplyWindowBackgroundTransparency(Transparency)
+    end
+
+    function Window:GetBackgroundTransparency()
+        return Library.BackgroundTransparency
     end
 
     function Window:SetCornerRadius(Radius: number)
@@ -7379,6 +7413,7 @@ function Library:CreateWindow(WindowInfo)
             do
                 GroupboxHolder = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
+                    BackgroundTransparency = Library.BackgroundTransparency,
                     Size = UDim2.fromScale(1, 0),
                     Parent = BoxHolder,
                 })
@@ -7497,6 +7532,7 @@ function Library:CreateWindow(WindowInfo)
             do
                 TabboxHolder = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
+                    BackgroundTransparency = Library.BackgroundTransparency,
                     Size = UDim2.fromScale(1, 0),
                     Parent = BoxHolder,
                 })
